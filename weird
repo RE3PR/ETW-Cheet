@@ -6,6 +6,364 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+-- ===================== ç½ååç³»ç» =====================
+local whitelist = {   
+    -- ä½¿ç¨ç¨æ·åï¼å¤ç¨ï¼
+	"KoalalaIa",
+    "tranvan1909",
+    "askeg_75",
+    "nzx_fy",
+    "boikhang03",
+    "Kedada001",
+    "pth_279",
+    "Parkfire_I",
+    "hdieucutephomaique29",
+    "Uyenthui08",
+    "tranvan0919",
+    "Boylegendaryy",
+    "thangk67",
+    "djfjfjfjddjh",
+    "sratiousus",
+    "wury226",
+    "ultra_instinct722",
+    "kaydragonkun",
+    "lIIIIIllIlIlIIIlllIl",
+    "cyhn1h",
+    "cyhnxh1",
+    "pedro_diascs007",
+    "ayokosayo_3",
+    "ZLOYDE_ORG",
+    "RUSCLAM_ORG7",
+    "bryanggg123421",
+    "El_guero0623",
+    "yaopiwww",
+    "sle_epymom",
+    "FirstBembang05",
+    "Fatho_27",
+    "SoMO_WOW",
+    "idoy2130",
+    "ThailandlRoB",
+    "Itzjustme_melody",
+    "chron_22",
+    "ULTR0MM",
+    "arthurzinho011",
+    "alicia05905",
+    "ocdn0898",
+    "De4vzzz",
+    "KrampusPlaysCb",
+    "joseito02e",
+    "Pudin_gL",
+    "Onur_acar",
+    "Achraf_elmechyly",
+    "Thomas_Blx",
+    "touchxss",
+    "miemo46",
+    "Lider_TTM",
+    "Thomas_Blx",
+    "Achraf_elmechyly",
+    "Gabriel13G34",
+    "aliuttr",
+    "Smolker1624",
+    "jonq8648ka",
+    "Dvc628jav",
+    "kevinderec",
+    "Afz_Bilz38",
+    "Tiredofeverythingxxx",
+    "amisugar1",
+    "nsatukigameYT233",
+    "Arrrrr894",
+    "Boba092116",
+    "piau_4560",
+    "Alexita4751",
+    "lyk19940612",
+    "hvt1022010",
+    "VILAO_UF",
+    "GOOD_MACR0",
+    "Player2",
+    "Player2",
+    "Player2",
+    "Player2",
+    "Player2",
+    "Player2",
+    "Player2",
+    "Player2",
+    "Player2",
+    "Player2",
+    "Player2",
+    "Player2",
+    "Player2",
+    "Player2",
+    "Player2",
+    "Player2",
+    -- æ·»å æ´å¤ç½ååç¨æ·å
+}
+-- æ£æ¥ç¨æ·æ¯å¦å¨ç½ååä¸­
+local function isWhitelisted(player)
+    if not player then return false end
+    -- ä¼åæ£æ¥ç¨æ·ID
+    local playerUserId = player.UserId
+    for _, whitelistedId in ipairs(whitelist) do
+        if type(whitelistedId) == "number" then
+            if whitelistedId == playerUserId then
+                return true
+            end
+        end
+    end
+    -- å¶æ¬¡æ£æ¥ç¨æ·å
+    local playerName = player.Name
+    for _, whitelistedName in ipairs(whitelist) do
+        if type(whitelistedName) == "string" then
+            if whitelistedName == playerName then
+                return true
+            end
+        end
+    end
+    return false
+end
+-- æ¾ç¤ºç½ååæç¤º
+local function showWhitelistWarning()
+    local TweenService = game:GetService("TweenService")
+    local whitelistGui = Instance.new("ScreenGui")
+    whitelistGui.Name = "WhitelistGui"
+    whitelistGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    whitelistGui.ResetOnSpawn = false
+    whitelistGui.Parent = CoreGui
+    -- èæ¯é®ç½©
+    local backgroundOverlay = Instance.new("Frame")
+    backgroundOverlay.Size = UDim2.new(1, 0, 1, 0)
+    backgroundOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    backgroundOverlay.BackgroundTransparency = 0.7
+    backgroundOverlay.Parent = whitelistGui
+    -- ä¸»çªå£
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Name = "MainFrame"
+    mainFrame.Size = UDim2.new(0, 500, 0, 280)
+    mainFrame.Position = UDim2.new(0.5, -250, 0.5, -140)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Parent = whitelistGui
+    -- çªå£åè§
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 12)
+    corner.Parent = mainFrame
+    -- çªå£é´å½±
+    local shadow = Instance.new("UIStroke")
+    shadow.Color = Color3.fromRGB(0, 0, 0)
+    shadow.Transparency = 0.6
+    shadow.Thickness = 6
+    shadow.Parent = mainFrame
+    -- é¡¶é¨èè²æ¡
+    local topBar = Instance.new("Frame")
+    topBar.Size = UDim2.new(1, 0, 0, 8)
+    topBar.BackgroundColor3 = Color3.fromRGB(60, 120, 220)
+    topBar.Parent = mainFrame
+    -- ä¿¡æ¯å¾æ 
+    local infoIcon = Instance.new("TextLabel")
+    infoIcon.Size = UDim2.new(0, 60, 0, 60)
+    infoIcon.Position = UDim2.new(0.5, -30, 0, 20)
+    infoIcon.BackgroundColor3 = Color3.fromRGB(60, 120, 220)
+    infoIcon.Text = "i"
+    infoIcon.Font = Enum.Font.SourceSansBold
+    infoIcon.TextSize = 40
+    infoIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
+    infoIcon.TextXAlignment = Enum.TextXAlignment.Center
+    infoIcon.TextYAlignment = Enum.TextYAlignment.Center
+    infoIcon.Parent = mainFrame
+    local iconCorner = Instance.new("UICorner")
+    iconCorner.CornerRadius = UDim.new(0.5, 0)
+    iconCorner.Parent = infoIcon
+    -- æ é¢
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Name = "TitleLabel"
+    titleLabel.Size = UDim2.new(1, -40, 0, 30)
+    titleLabel.Position = UDim2.new(0, 20, 0, 90)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = "Whitelist Required"
+    titleLabel.Font = Enum.Font.SourceSansBold
+    titleLabel.TextSize = 40
+    titleLabel.TextColor3 = Color3.fromRGB(60, 120, 220)
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Center
+    titleLabel.Parent = mainFrame
+    -- æ¶æ¯åå®¹
+    local messageLabel = Instance.new("TextLabel")
+    messageLabel.Name = "MessageLabel"
+    messageLabel.Size = UDim2.new(1, -40, 0, 80)
+    messageLabel.Position = UDim2.new(0, 20, 0, 130)
+    messageLabel.BackgroundTransparency = 1
+    messageLabel.Text = "Users who need whitelisting, please send me a private message on TikTok."
+    messageLabel.Font = Enum.Font.SourceSans
+    messageLabel.TextSize = 25
+    messageLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    messageLabel.TextXAlignment = Enum.TextXAlignment.Center
+    messageLabel.TextYAlignment = Enum.TextYAlignment.Top
+    messageLabel.TextWrapped = true
+    messageLabel.Parent = mainFrame
+    -- å¤å¶é¾æ¥æé®
+    local copyButton = Instance.new("TextButton")
+    copyButton.Name = "CopyButton"
+    copyButton.Size = UDim2.new(0, 150, 0, 36)
+    copyButton.Position = UDim2.new(0.5, -160, 0, 220)
+    copyButton.BackgroundColor3 = Color3.fromRGB(60, 120, 220)
+    copyButton.Text = "Copy Link"
+    copyButton.Font = Enum.Font.SourceSansBold
+    copyButton.TextSize = 35
+    copyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    copyButton.Parent = mainFrame
+    local copyCorner = Instance.new("UICorner")
+    copyCorner.CornerRadius = UDim.new(0, 6)
+    copyCorner.Parent = copyButton
+    -- å³é­æé®
+    local closeButton = Instance.new("TextButton")
+    closeButton.Name = "CloseButton"
+    closeButton.Size = UDim2.new(0, 150, 0, 36)
+    closeButton.Position = UDim2.new(0.5, 10, 0, 220)
+    closeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 58)
+    closeButton.Text = "Close"
+    closeButton.Font = Enum.Font.SourceSansBold
+    closeButton.TextSize = 35
+    closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    closeButton.Parent = mainFrame
+    local closeCorner = Instance.new("UICorner")
+    closeCorner.CornerRadius = UDim.new(0, 6)
+    closeCorner.Parent = closeButton
+    -- å¨ç»ææ
+    mainFrame.Size = UDim2.new(0, 0, 0, 0)
+    infoIcon.Size = UDim2.new(0, 0, 0, 0)
+    titleLabel.TextTransparency = 1
+    messageLabel.TextTransparency = 1
+    copyButton.BackgroundTransparency = 1
+    copyButton.TextTransparency = 1
+    closeButton.BackgroundTransparency = 1
+    closeButton.TextTransparency = 1
+    -- æ·¡å¥èæ¯
+    TweenService:Create(backgroundOverlay, TweenInfo.new(0.3), {
+        BackgroundTransparency = 0.7
+    }):Play()
+    -- çªå£å¼¹åºå¨ç»
+    TweenService:Create(mainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 500, 0, 280)
+    }):Play()
+    -- å¾æ å¨ç»
+    task.wait(0.2)
+    TweenService:Create(infoIcon, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 60, 0, 60)
+    }):Play()
+    -- æå­æ·¡å¥
+    task.wait(0.1)
+    TweenService:Create(titleLabel, TweenInfo.new(0.5), {
+        TextTransparency = 0
+    }):Play()
+    task.wait(0.2)
+    TweenService:Create(messageLabel, TweenInfo.new(0.5), {
+        TextTransparency = 0
+    }):Play()
+    -- æé®æ·¡å¥
+    task.wait(0.2)
+    TweenService:Create(copyButton, TweenInfo.new(0.3), {
+        BackgroundTransparency = 0
+    }):Play()
+    TweenService:Create(copyButton, TweenInfo.new(0.3), {
+        TextTransparency = 0
+    }):Play()
+    TweenService:Create(closeButton, TweenInfo.new(0.3), {
+        BackgroundTransparency = 0
+    }):Play()
+    TweenService:Create(closeButton, TweenInfo.new(0.3), {
+        TextTransparency = 0
+    }):Play()
+    -- æé®æ¬åææ
+    copyButton.MouseEnter:Connect(function()
+        TweenService:Create(copyButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(70, 130, 230)
+        }):Play()
+    end)
+    copyButton.MouseLeave:Connect(function()
+        TweenService:Create(copyButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(60, 120, 220)
+        }):Play()
+    end)
+    closeButton.MouseEnter:Connect(function()
+        TweenService:Create(closeButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+        }):Play()
+    end)
+    closeButton.MouseLeave:Connect(function()
+        TweenService:Create(closeButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(50, 50, 58)
+        }):Play()
+    end)
+    -- å¤å¶é¾æ¥æé®åè½
+    copyButton.MouseButton1Click:Connect(function()
+        -- å¤å¶é¾æ¥å°åªè´´æ¿
+        local link = "discord.gg/kPN2Szg5E"
+        setclipboard(link)
+        -- æ¾ç¤ºå¤å¶æåæç¤º
+        local successGui = Instance.new("ScreenGui")
+        successGui.Name = "SuccessGui"
+        successGui.Parent = CoreGui
+        local successFrame = Instance.new("Frame")
+        successFrame.Size = UDim2.new(0, 200, 0, 50)
+        successFrame.Position = UDim2.new(0.5, -100, 0.5, -100)
+        successFrame.BackgroundColor3 = Color3.fromRGB(40, 160, 40)
+        successFrame.Parent = successGui
+        local successCorner = Instance.new("UICorner")
+        successCorner.CornerRadius = UDim.new(0, 8)
+        successCorner.Parent = successFrame
+        local successText = Instance.new("TextLabel")
+        successText.Size = UDim2.new(1, 0, 1, 0)
+        successText.BackgroundTransparency = 1
+        successText.Text = "Link copied!"
+        successText.Font = Enum.Font.SourceSansBold
+        successText.TextSize = 16
+        successText.TextColor3 = Color3.fromRGB(255, 255, 255)
+        successText.TextXAlignment = Enum.TextXAlignment.Center
+        successText.Parent = successFrame
+        -- æ·¡å¥æ·¡åºå¨ç»
+        successFrame.Transparency = 1
+        TweenService:Create(successFrame, TweenInfo.new(0.3), {
+            Transparency = 0
+        }):Play()
+        task.wait(2)
+        TweenService:Create(successFrame, TweenInfo.new(0.3), {
+            Transparency = 1
+        }):Play()
+        task.wait(0.3)
+        successGui:Destroy()
+    end)
+    -- å³é­æé®åè½
+    closeButton.MouseButton1Click:Connect(function()
+        -- æ·¡åºå¨ç»
+        TweenService:Create(backgroundOverlay, TweenInfo.new(0.3), {
+            BackgroundTransparency = 1
+        }):Play()
+        TweenService:Create(mainFrame, TweenInfo.new(0.3), {
+            Size = UDim2.new(0, 0, 0, 0),
+            Transparency = 1
+        }):Play()
+        task.wait(0.3)
+        whitelistGui:Destroy()
+    end)
+    return whitelistGui
+end
+-- æ£æ¥å¹¶æ§è¡ç½ååé»è¾
+local function checkWhitelist()
+    local localPlayer = Players.LocalPlayer
+    if not localPlayer then return false end
+    local isAllowed = isWhitelisted(localPlayer)
+    if not isAllowed then
+        print("[ç½ååç³»ç»] æ£æµå°éç½ååç¨æ·:", localPlayer.Name)
+        showWhitelistWarning()
+        return false
+    end
+    print("[ç½ååç³»ç»] æ£æµå°ç½ååç¨æ·:", localPlayer.Name)
+    return true
+end
+-- æ§è¡ç½ååæ£æ¥
+if not checkWhitelist() then
+    -- éç½ååç¨æ·ï¼æ¾ç¤ºæç¤ºå¹¶é»æ­¢èæ¬ç»§ç»­æ§è¡
+    print("[ç½ååç³»ç»] éç½ååç¨æ·ï¼èæ¬å·²åæ­¢æ§è¡")
+    return
+end
 local Events = ReplicatedStorage:WaitForChild("Events")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -20,19 +378,7 @@ function UI:NewWindow(title)
     self.MainGui.Name = "ChiChiWorldUI"
     self.MainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     self.MainGui.ResetOnSpawn = false
-    -- Force CoreGui (works on all modern executors)
-if gethui then
-    self.MainGui.Parent = gethui()
-elseif syn and syn.protect_gui then
-    syn.protect_gui(self.MainGui)
-    self.MainGui.Parent = CoreGui
-else
-    self.MainGui.Parent = CoreGui
-end
-
--- Center + make window bigger & obvious
-self.Window.Position = UDim2.new(0.5, -100, 0.5, -60)
-self.Window.Size = UDim2.new(0, 200, 0, 120)
+    self.MainGui.Parent = syn and CoreGui or PlayerGui
     -- ä¸»çªå£æ¡æ¶
     self.Window = Instance.new("Frame")
     self.Window.Name = "MainWindow"
