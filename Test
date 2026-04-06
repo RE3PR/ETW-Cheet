@@ -1,0 +1,56 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+
+local LocalPlayer = Players.LocalPlayer
+local Events = ReplicatedStorage:WaitForChild("Events")
+
+local function notify(title, text, duration)
+    StarterGui:SetCore("SendNotification", {
+        Title = title,
+        Text = text,
+        Duration = duration or 5
+    })
+end
+
+local function claimAllCratesAndResetTimers()
+    notify("Crate Manager", "Claiming all rewards & resetting timers...", 4)
+    
+    local claimed = 0
+    local TimedRewards = LocalPlayer:FindFirstChild("TimedRewards")
+    
+    if TimedRewards then
+        for _, reward in ipairs(TimedRewards:GetChildren()) do
+            if reward:IsA("IntValue") or reward:IsA("NumberValue") then
+                -- Claim if there's something to claim
+                if reward.Value > 0 then
+                    Events.RewardEvent:FireServer(reward)
+                    claimed += 1
+                end
+                
+                -- Reset timer to 0 (this is the key part for "reset")
+                reward.Value = 0
+            end
+        end
+    end
+    
+    -- Extra reward actions
+    Events.SpinEvent:FireServer()
+    
+    -- Optional: Respawn character to force server sync
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.Health = 0
+    end
+    
+    task.wait(1.5)
+    
+    notify("✅ Success!", 
+        "Claimed " .. claimed .. " rewards\nAll crate timers reset to 0!", 
+        6)
+end
+
+-- ===================== ONE-CLICK EXECUTE =====================
+claimAllCratesAndResetTimers()
+
+-- Optional: Add as a button if you want to reuse it
+print("Crate Claim + Timer Reset executed successfully!")
