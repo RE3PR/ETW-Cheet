@@ -206,7 +206,7 @@ local Events = ReplicatedStorage:WaitForChild("Events")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- ===================== 本地化UI库实现 =====================
+-- ===================== 本地化UI库实现 (改进版) =====================
 local UI = {}
 UI.__index = UI
 
@@ -220,36 +220,42 @@ function UI:NewWindow(title)
 
     self.Window = Instance.new("Frame")
     self.Window.Name = "MainWindow"
-    self.Window.Size = UDim2.new(0, 220, 0, 180)
+    self.Window.Size = UDim2.new(0, 280, 0, 200)   -- 更宽，初始高度略高
     self.Window.Position = UDim2.new(0.1, 0, 0.1, 0)
-    self.Window.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
+    self.Window.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
     self.Window.BorderSizePixel = 0
     self.Window.ClipsDescendants = true
     self.Window.Parent = self.MainGui
 
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
+    corner.CornerRadius = UDim.new(0, 10)
     corner.Parent = self.Window
 
     local shadow = Instance.new("UIStroke")
     shadow.Color = Color3.fromRGB(0, 0, 0)
-    shadow.Transparency = 0.5
+    shadow.Transparency = 0.6
     shadow.Thickness = 4
     shadow.Parent = self.Window
 
     self.TitleBar = Instance.new("Frame")
     self.TitleBar.Name = "TitleBar"
-    self.TitleBar.Size = UDim2.new(1, 0, 0, 40)
-    self.TitleBar.BackgroundColor3 = Color3.fromRGB(36, 36, 42)
+    self.TitleBar.Size = UDim2.new(1, 0, 0, 38)
+    self.TitleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 36)
     self.TitleBar.Parent = self.Window
+
+    -- 顶部装饰线
+    local topLine = Instance.new("Frame")
+    topLine.Size = UDim2.new(1, 0, 0, 2)
+    topLine.BackgroundColor3 = Color3.fromRGB(60, 120, 220)
+    topLine.Parent = self.TitleBar
 
     self.TitleText = Instance.new("TextLabel")
     self.TitleText.Size = UDim2.new(1, -40, 1, 0)
-    self.TitleText.Position = UDim2.new(0, 10, 0, 0)
+    self.TitleText.Position = UDim2.new(0, 12, 0, 0)
     self.TitleText.BackgroundTransparency = 1
     self.TitleText.Text = title
-    self.TitleText.Font = Enum.Font.SourceSansBold
-    self.TitleText.TextSize = 18
+    self.TitleText.Font = Enum.Font.GothamBold
+    self.TitleText.TextSize = 16
     self.TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.TitleText.TextXAlignment = Enum.TextXAlignment.Left
     self.TitleText.Parent = self.TitleBar
@@ -259,14 +265,14 @@ function UI:NewWindow(title)
     self.CollapseBtn.Position = UDim2.new(1, -40, 0, 0)
     self.CollapseBtn.BackgroundTransparency = 1
     self.CollapseBtn.Text = "-"
-    self.CollapseBtn.Font = Enum.Font.SourceSansBold
+    self.CollapseBtn.Font = Enum.Font.GothamBold
     self.CollapseBtn.TextSize = 20
-    self.CollapseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    self.CollapseBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
     self.CollapseBtn.Parent = self.TitleBar
 
     self.ContentContainer = Instance.new("ScrollingFrame")
-    self.ContentContainer.Size = UDim2.new(1, 0, 1, -40)
-    self.ContentContainer.Position = UDim2.new(0, 0, 0, 40)
+    self.ContentContainer.Size = UDim2.new(1, -8, 1, -38)
+    self.ContentContainer.Position = UDim2.new(0, 4, 0, 38)
     self.ContentContainer.BackgroundTransparency = 1
     self.ContentContainer.ScrollBarThickness = 4
     self.ContentContainer.CanvasSize = UDim2.new(1, 0, 0, 0)
@@ -313,11 +319,11 @@ end
 function UI:ToggleCollapse()
     self.IsCollapsed = not self.IsCollapsed
     if self.IsCollapsed then
-        TweenService:Create(self.Window, TweenInfo.new(0.2), {Size = UDim2.new(0, 220, 0, 40)}):Play()
+        TweenService:Create(self.Window, TweenInfo.new(0.2), {Size = UDim2.new(0, 280, 0, 38)}):Play()
         self.CollapseBtn.Text = "+"
         self.ContentContainer.Visible = false
     else
-        TweenService:Create(self.Window, TweenInfo.new(0.2), {Size = UDim2.new(0, 220, 0, 180)}):Play()
+        TweenService:Create(self.Window, TweenInfo.new(0.2), {Size = UDim2.new(0, 280, 0, 200)}):Play()
         self.CollapseBtn.Text = "-"
         task.wait(0.2)
         self.ContentContainer.Visible = true
@@ -328,23 +334,23 @@ function UI:NewSection(title)
     local section = {}
     section.Title = title
     section.Frame = Instance.new("Frame")
-    section.Frame.Size = UDim2.new(1, -20, 0, 50)
-    section.Frame.Position = UDim2.new(0, 10, 0, self.CurrentY)
-    section.Frame.BackgroundColor3 = Color3.fromRGB(36, 36, 42)
+    section.Frame.Size = UDim2.new(1, -12, 0, 44)
+    section.Frame.Position = UDim2.new(0, 6, 0, self.CurrentY)
+    section.Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 36)
     section.Frame.Parent = self.ContentContainer
 
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
+    corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = section.Frame
 
     section.TitleText = Instance.new("TextLabel")
     section.TitleText.Size = UDim2.new(1, -40, 1, 0)
-    section.TitleText.Position = UDim2.new(0, 10, 0, 0)
+    section.TitleText.Position = UDim2.new(0, 12, 0, 0)
     section.TitleText.BackgroundTransparency = 1
     section.TitleText.Text = title
-    section.TitleText.Font = Enum.Font.SourceSansBold
-    section.TitleText.TextSize = 16
-    section.TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    section.TitleText.Font = Enum.Font.GothamBold
+    section.TitleText.TextSize = 15
+    section.TitleText.TextColor3 = Color3.fromRGB(220, 220, 220)
     section.TitleText.TextXAlignment = Enum.TextXAlignment.Left
     section.TitleText.Parent = section.Frame
 
@@ -353,14 +359,14 @@ function UI:NewSection(title)
     section.ToggleBtn.Position = UDim2.new(1, -40, 0, 0)
     section.ToggleBtn.BackgroundTransparency = 1
     section.ToggleBtn.Text = "+"
-    section.ToggleBtn.Font = Enum.Font.SourceSansBold
+    section.ToggleBtn.Font = Enum.Font.GothamBold
     section.ToggleBtn.TextSize = 18
-    section.ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    section.ToggleBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
     section.ToggleBtn.Parent = section.Frame
 
     section.Content = Instance.new("Frame")
-    section.Content.Size = UDim2.new(1, -20, 0, 0)
-    section.Content.Position = UDim2.new(0, 10, 0, self.CurrentY + 40)
+    section.Content.Size = UDim2.new(1, -12, 0, 0)
+    section.Content.Position = UDim2.new(0, 6, 0, self.CurrentY + 44)
     section.Content.BackgroundTransparency = 1
     section.Content.ClipsDescendants = true
     section.Content.Parent = self.ContentContainer
@@ -369,63 +375,64 @@ function UI:NewSection(title)
     section.Buttons = {}
     section.ContentY = 0
 
-    self.CurrentY = self.CurrentY + 40
+    self.CurrentY = self.CurrentY + 44
     self.ContentContainer.CanvasSize = UDim2.new(1, 0, 0, self.CurrentY)
 
-    local newHeight = math.max(180, 40 + self.CurrentY + 20)
-    TweenService:Create(self.Window, TweenInfo.new(0.2), {Size = UDim2.new(0, 220, 0, newHeight)}):Play()
+    local newHeight = math.max(200, 38 + self.CurrentY + 20)
+    TweenService:Create(self.Window, TweenInfo.new(0.2), {Size = UDim2.new(0, 280, 0, newHeight)}):Play()
 
     section.ToggleBtn.MouseButton1Click:Connect(function()
         section.IsExpanded = not section.IsExpanded
         if section.IsExpanded then
             section.ToggleBtn.Text = "-"
-            TweenService:Create(section.Content, TweenInfo.new(0.2), {Size = UDim2.new(1, -20, 0, section.ContentY)}):Play()
+            TweenService:Create(section.Content, TweenInfo.new(0.2), {Size = UDim2.new(1, -12, 0, section.ContentY)}):Play()
             self.CurrentY = self.CurrentY + section.ContentY
         else
             section.ToggleBtn.Text = "+"
-            TweenService:Create(section.Content, TweenInfo.new(0.2), {Size = UDim2.new(1, -20, 0, 0)}):Play()
+            TweenService:Create(section.Content, TweenInfo.new(0.2), {Size = UDim2.new(1, -12, 0, 0)}):Play()
             self.CurrentY = self.CurrentY - section.ContentY
         end
 
         self.ContentContainer.CanvasSize = UDim2.new(1, 0, 0, self.CurrentY)
-        local newHeight = math.max(180, 40 + self.CurrentY + 20)
-        TweenService:Create(self.Window, TweenInfo.new(0.2), {Size = UDim2.new(0, 220, 0, newHeight)}):Play()
+        local newHeight = math.max(200, 38 + self.CurrentY + 20)
+        TweenService:Create(self.Window, TweenInfo.new(0.2), {Size = UDim2.new(0, 280, 0, newHeight)}):Play()
     end)
 
-    function section:CreateToggle(text, callback)
+    -- 改进：支持默认开启状态
+    function section:CreateToggle(text, callback, defaultState)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(1, 0, 0, 35)
+        btn.Size = UDim2.new(1, 0, 0, 42)
         btn.Position = UDim2.new(0, 0, 0, section.ContentY)
-        btn.BackgroundColor3 = Color3.fromRGB(44, 44, 50)
+        btn.BackgroundColor3 = Color3.fromRGB(38, 38, 44)
         btn.Parent = section.Content
 
         local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 4)
+        corner.CornerRadius = UDim.new(0, 6)
         corner.Parent = btn
 
         local btnText = Instance.new("TextLabel")
-        btnText.Size = UDim2.new(1, -40, 1, 0)
-        btnText.Position = UDim2.new(0, 10, 0, 0)
+        btnText.Size = UDim2.new(1, -50, 1, 0)
+        btnText.Position = UDim2.new(0, 12, 0, 0)
         btnText.BackgroundTransparency = 1
         btnText.Text = text
-        btnText.Font = Enum.Font.SourceSans
+        btnText.Font = Enum.Font.Gotham
         btnText.TextSize = 14
-        btnText.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btnText.TextColor3 = Color3.fromRGB(240, 240, 240)
         btnText.TextXAlignment = Enum.TextXAlignment.Left
         btnText.Parent = btn
 
-        local toggleState = false
+        local toggleState = defaultState or false
         local stateLabel = Instance.new("TextLabel")
-        stateLabel.Size = UDim2.new(0, 30, 0, 20)
-        stateLabel.Position = UDim2.new(1, -40, 0.5, -10)
-        stateLabel.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-        stateLabel.Text = "Off"
-        stateLabel.Font = Enum.Font.SourceSansBold
+        stateLabel.Size = UDim2.new(0, 40, 0, 24)
+        stateLabel.Position = UDim2.new(1, -48, 0.5, -12)
+        stateLabel.BackgroundColor3 = toggleState and Color3.fromRGB(60, 180, 60) or Color3.fromRGB(60, 60, 70)
+        stateLabel.Text = toggleState and "On" or "Off"
+        stateLabel.Font = Enum.Font.GothamBold
         stateLabel.TextSize = 12
         stateLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
         stateLabel.Parent = btn
         local stateCorner = Instance.new("UICorner")
-        stateCorner.CornerRadius = UDim.new(0, 10)
+        stateCorner.CornerRadius = UDim.new(0, 12)
         stateCorner.Parent = stateLabel
 
         btn.MouseButton1Click:Connect(function()
@@ -436,13 +443,18 @@ function UI:NewSection(title)
         end)
 
         btn.MouseEnter:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(54, 54, 60)}):Play()
+            TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(48, 48, 54)}):Play()
         end)
         btn.MouseLeave:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(44, 44, 50)}):Play()
+            TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(38, 38, 44)}):Play()
         end)
 
-        section.ContentY = section.ContentY + 35
+        -- 如果默认状态为 true，立即调用回调
+        if toggleState then
+            callback(true)
+        end
+
+        section.ContentY = section.ContentY + 42
         table.insert(section.Buttons, btn)
         return btn
     end
@@ -461,6 +473,7 @@ local showMap = false
 -- ===================== Auto Farm 逻辑 =====================
 local autoFarmCallback = function(enabled)
     autofarm = enabled
+    if not enabled then return end
     coroutine.wrap(function()
         local text = Drawing.new("Text")
         text.Outline = true
@@ -626,7 +639,7 @@ local autoFarmCallback = function(enabled)
         local charAddConn = LocalPlayer.CharacterAdded:Connect(onCharAdd)
 
         while autofarm do
-            local dt = task.wait()
+            task.wait()
             if workspace:FindFirstChild("Loading") then
                 workspace.Loading:Destroy()
             end
@@ -655,6 +668,10 @@ end
 -- ===================== Auto Collect 逻辑 =====================
 local autoCollectCallback = function(enabled)
     autoCollectingCubes = enabled
+    if not enabled then
+        LocalPlayer.PlayerScripts.CubeVis.Enabled = true
+        return
+    end
     coroutine.wrap(function()
         LocalPlayer.PlayerScripts.CubeVis.Enabled = false
         while autoCollectingCubes do
@@ -675,6 +692,7 @@ end
 -- ===================== Auto Claim 逻辑 =====================
 local autoClaimCallback = function(enabled)
     autoClaimRewards = enabled
+    if not enabled then return end
     coroutine.wrap(function()
         while autoClaimRewards do
             task.wait(1)
@@ -693,13 +711,9 @@ local mainUI = UI:NewWindow("Eat the World")
 
 local autoSection = mainUI:NewSection("Auto Features")
 
-autoSection:CreateToggle("Auto farm", autoFarmCallback)
-autoSection:CreateToggle("Auto collect", autoCollectCallback)
-autoSection:CreateToggle("Auto claim", autoClaimCallback)
-
--- ===================== 启动时自动开启 =====================
-autoFarmCallback(true)
-autoCollectCallback(true)
-autoClaimCallback(true)
+-- 默认状态设为 true，UI 会立即显示 "On" 并启动功能
+autoSection:CreateToggle("Auto farm", autoFarmCallback, true)
+autoSection:CreateToggle("Auto collect", autoCollectCallback, true)
+autoSection:CreateToggle("Auto claim", autoClaimCallback, true)
 
 print("[Eat the World] Script loaded - Auto Farm, Auto Collect & Auto Claim are ENABLED by default")
