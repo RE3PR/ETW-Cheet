@@ -1,225 +1,116 @@
--- Services
+-- =============================================
+-- Clean Crates Manager - Fixed Reset
+-- =============================================
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local CoreGui = game:GetService("CoreGui")
-local PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-local Workspace = game:GetService("Workspace")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
 local Events = ReplicatedStorage:WaitForChild("Events")
 
--- Wait for character and required instances
-local function waitForCharacter()
-    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    character:WaitForChild("HumanoidRootPart")
-    return character
-end
+-- ===================== Simple UI =====================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "CratesManager"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- Claim all crates: collect cubes + claim timed rewards
-local function claimCrates()
-    local character = waitForCharacter()
-    local root = character:FindFirstChild("HumanoidRootPart")
-    if not root then return end
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 300, 0, 180)
+MainFrame.Position = UDim2.new(0.5, -150, 0.4, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = ScreenGui
 
-    -- 1. Collect cubes (as in original "Auto collect")
-    local cubeVis = LocalPlayer.PlayerScripts:FindFirstChild("CubeVis")
-    if cubeVis then cubeVis.Enabled = false end
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.Parent = MainFrame
 
-    for _, obj in pairs(Workspace:GetChildren()) do
-        if obj.Name == "Cube" and obj:FindFirstChild("Owner") then
-            local owner = obj.Owner.Value
-            if owner == LocalPlayer.Name or owner == "" then
-                pcall(function()
-                    obj.CFrame = root.CFrame
-                end)
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 45)
+Title.BackgroundTransparency = 1
+Title.Text = "Crates Manager"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 24
+Title.Font = Enum.Font.SourceSansBold
+Title.Parent = MainFrame
+
+-- Claim Button
+local ClaimBtn = Instance.new("TextButton")
+ClaimBtn.Size = UDim2.new(0.9, 0, 0, 50)
+ClaimBtn.Position = UDim2.new(0.05, 0, 0, 55)
+ClaimBtn.BackgroundColor3 = Color3.fromRGB(60, 180, 60)
+ClaimBtn.Text = "Claim Crates"
+ClaimBtn.TextColor3 = Color3.new(1,1,1)
+ClaimBtn.TextSize = 18
+ClaimBtn.Font = Enum.Font.SourceSansBold
+ClaimBtn.Parent = MainFrame
+
+local ClaimCorner = Instance.new("UICorner")
+ClaimCorner.CornerRadius = UDim.new(0, 10)
+ClaimCorner.Parent = ClaimBtn
+
+-- Reset Button
+local ResetBtn = Instance.new("TextButton")
+ResetBtn.Size = UDim2.new(0.9, 0, 0, 50)
+ResetBtn.Position = UDim2.new(0.05, 0, 0, 115)
+ResetBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+ResetBtn.Text = "Reset Crates (Restart Timer)"
+ResetBtn.TextColor3 = Color3.new(1,1,1)
+ResetBtn.TextSize = 18
+ResetBtn.Font = Enum.Font.SourceSansBold
+ResetBtn.Parent = MainFrame
+
+local ResetCorner = Instance.new("UICorner")
+ResetCorner.CornerRadius = UDim.new(0, 10)
+ResetCorner.Parent = ResetBtn
+
+-- ===================== Functions =====================
+
+local function ClaimCrates()
+    if not LocalPlayer:FindFirstChild("TimedRewards") then 
+        warn("TimedRewards folder not found")
+        return 
+    end
+    
+    for _, reward in pairs(LocalPlayer.TimedRewards:GetChildren()) do
+        if reward:IsA("IntValue") or reward:IsA("NumberValue") then
+            if reward.Value > 0 then
+                Events.RewardEvent:FireServer(reward)
             end
         end
     end
+    Events.SpinEvent:FireServer()
+end
 
-    if cubeVis then cubeVis.Enabled = true end
-
-    -- 2. Claim timed rewards (as in original "Auto claim")
+local function ResetCrates()
+    if not LocalPlayer:FindFirstChild("TimedRewards") then 
+        warn("TimedRewards folder not found")
+        return 
+    end
+    
+    -- This forces the timers to restart their full countdown
     for _, reward in pairs(LocalPlayer.TimedRewards:GetChildren()) do
-        if reward.Value > 0 then
-            pcall(function()
-                Events.RewardEvent:FireServer(reward)
-            end)
+        if reward:IsA("IntValue") or reward:IsA("NumberValue") then
+            -- Setting to a high number restarts the countdown from maximum time
+            reward.Value = 999999  
         end
     end
-
-    -- Also fire spin event (optional, from original)
-    pcall(function()
-        Events.SpinEvent:FireServer()
-    end)
-
-    -- Simple feedback (optional)
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Claim Crates",
-        Text = "Cubes collected & rewards claimed!",
-        Duration = 3
-    })
 end
 
--- Reset all crate timers by setting their value to 0
-local function resetCrates()
-    for _, reward in pairs(LocalPlayer.TimedRewards:GetChildren()) do
-        pcall(function()
-            reward.Value = 0
-        end)
-    end
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Reset Crates",
-        Text = "All crate timers have been reset!",
-        Duration = 3
-    })
-end
+-- ===================== Connections =====================
 
--- Create UI
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "CrateManagerUI"
-screenGui.ResetOnSpawn = false
-screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-screenGui.Parent = (syn and CoreGui) or PlayerGui
-
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 220, 0, 100)
-mainFrame.Position = UDim2.new(0.5, -110, 0.5, -50)
-mainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = screenGui
-
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
-corner.Parent = mainFrame
-
-local shadow = Instance.new("UIStroke")
-shadow.Color = Color3.fromRGB(0, 0, 0)
-shadow.Transparency = 0.5
-shadow.Thickness = 4
-shadow.Parent = mainFrame
-
--- Title bar
-local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1, 0, 0, 30)
-titleBar.BackgroundColor3 = Color3.fromRGB(36, 36, 42)
-titleBar.Parent = mainFrame
-
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 1, 0)
-title.BackgroundTransparency = 1
-title.Text = "Crate Manager"
-title.Font = Enum.Font.SourceSansBold
-title.TextSize = 16
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.TextXAlignment = Enum.TextXAlignment.Center
-title.Parent = titleBar
-
--- Close button
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 30, 1, 0)
-closeBtn.Position = UDim2.new(1, -30, 0, 0)
-closeBtn.BackgroundTransparency = 1
-closeBtn.Text = "X"
-closeBtn.Font = Enum.Font.SourceSansBold
-closeBtn.TextSize = 16
-closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeBtn.Parent = titleBar
-closeBtn.MouseButton1Click:Connect(function()
-    screenGui:Destroy()
+ClaimBtn.MouseButton1Click:Connect(function()
+    ClaimBtn.Text = "Claiming..."
+    ClaimCrates()
+    task.wait(1)
+    ClaimBtn.Text = "Claim Crates"
 end)
 
--- Buttons container
-local btnContainer = Instance.new("Frame")
-btnContainer.Size = UDim2.new(1, -20, 1, -40)
-btnContainer.Position = UDim2.new(0, 10, 0, 35)
-btnContainer.BackgroundTransparency = 1
-btnContainer.Parent = mainFrame
-
--- Claim button
-local claimBtn = Instance.new("TextButton")
-claimBtn.Size = UDim2.new(1, 0, 0, 35)
-claimBtn.Position = UDim2.new(0, 0, 0, 0)
-claimBtn.BackgroundColor3 = Color3.fromRGB(60, 180, 60)
-claimBtn.Text = "Claim Crates"
-claimBtn.Font = Enum.Font.SourceSansBold
-claimBtn.TextSize = 16
-claimBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-claimBtn.Parent = btnContainer
-
-local claimCorner = Instance.new("UICorner")
-claimCorner.CornerRadius = UDim.new(0, 4)
-claimCorner.Parent = claimBtn
-
--- Reset button
-local resetBtn = Instance.new("TextButton")
-resetBtn.Size = UDim2.new(1, 0, 0, 35)
-resetBtn.Position = UDim2.new(0, 0, 0, 45)
-resetBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
-resetBtn.Text = "Reset Crates"
-resetBtn.Font = Enum.Font.SourceSansBold
-resetBtn.TextSize = 16
-resetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-resetBtn.Parent = btnContainer
-
-local resetCorner = Instance.new("UICorner")
-resetCorner.CornerRadius = UDim.new(0, 4)
-resetCorner.Parent = resetBtn
-
--- Button hover effects
-local function onHover(btn, color)
-    btn.MouseEnter:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = color}):Play()
-    end)
-    btn.MouseLeave:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = btn.BackgroundColor3}):Play()
-    end)
-end
-
-onHover(claimBtn, Color3.fromRGB(70, 200, 70))
-onHover(resetBtn, Color3.fromRGB(220, 70, 70))
-
--- Button actions
-claimBtn.MouseButton1Click:Connect(claimCrates)
-resetBtn.MouseButton1Click:Connect(resetCrates)
-
--- Make window draggable
-local dragging = false
-local dragStart = Vector2.new()
-local startPos = UDim2.new()
-
-titleBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = mainFrame.Position
-        UserInputService.MouseIconEnabled = false
-    end
+ResetBtn.MouseButton1Click:Connect(function()
+    ResetBtn.Text = "Resetting Timers..."
+    ResetCrates()
+    task.wait(1.2)
+    ResetBtn.Text = "Reset Crates (Restart Timer)"
 end)
 
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-        UserInputService.MouseIconEnabled = true
-    end
-end)
-
--- Initial notification
-game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "Crate Manager",
-    Text = "UI loaded!",
-    Duration = 2
-})
+print("✅ Crates Manager Loaded - Reset now properly restarts countdown!")
