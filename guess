@@ -11,7 +11,8 @@ local whitelist = {
     -- ç½ååç¨æ·åè¡¨
     "KoaIaIala",
     "zero456127",
-    "g88714033"
+    "g88714033",
+     "BestEatTheWorldFan"
 }
 -- æ£æ¥ç¨æ·æ¯å¦å¨ç½ååä¸­
 local function isWhitelisted(player)
