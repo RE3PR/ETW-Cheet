@@ -715,35 +715,124 @@ autoSection:CreateToggle("Auto claim", autoClaimCallback, true)
 -- ===================== Auto Upgrade Section =====================
 local upgradeSection = mainUI:NewSection("Auto Upgrade")
 
-local autoUpgradeEnabled = true          -- enabled by default
-local targetRatio = 5.5                  -- target Size/Multiplier ratio
-local upgradeSpeed = false               -- optional: upgrade Walkspeed
-local upgradeEatSpeed = false            -- optional: upgrade EatSpeed
+local autoUpgradeEnabled = true          -- master enable/disable
+local upgradeMode = "Ratio"              -- "Size", "Multi", "Speed", "EatSpeed", "Ratio"
+local targetRatio = 5.5                  -- for Ratio mode
+local upgradeSpeedExtra = false          -- extra upgrades (Ratio only)
+local upgradeEatSpeedExtra = false
 
--- Toggle for auto upgrade (default ON)
-upgradeSection:CreateToggle("Auto Upgrade (Ratio 5.5)", function(enabled)
+-- Master toggle
+upgradeSection:CreateToggle("Auto Upgrade (Master)", function(enabled)
     autoUpgradeEnabled = enabled
-    if enabled then
-        startAutoUpgradeLoop()
-    else
-        stopAutoUpgradeLoop()
-    end
 end, true)
 
--- Optional toggles
-upgradeSection:CreateToggle("Upgrade Walkspeed", function(enabled)
-    upgradeSpeed = enabled
-end, false)
+-- --------------------------------------------------------------------
+-- Dropdown for upgrade mode selection
+local modeDropdown = Instance.new("TextButton")
+modeDropdown.Name = "ModeDropdown"
+modeDropdown.Size = UDim2.new(1, -20, 0, 32)
+modeDropdown.Position = UDim2.new(0, 10, 0, upgradeSection.ContentY)
+modeDropdown.BackgroundColor3 = Color3.fromRGB(44, 44, 50)
+modeDropdown.Text = "Mode: Ratio 5.5"
+modeDropdown.Font = Enum.Font.Gotham
+modeDropdown.TextSize = 14
+modeDropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
+modeDropdown.TextXAlignment = Enum.TextXAlignment.Left
+modeDropdown.Parent = upgradeSection.Content
 
-upgradeSection:CreateToggle("Upgrade EatSpeed", function(enabled)
-    upgradeEatSpeed = enabled
-end, false)
+local dropdownCorner = Instance.new("UICorner")
+dropdownCorner.CornerRadius = UDim.new(0, 6)
+dropdownCorner.Parent = modeDropdown
 
--- (Optional) Button to change ratio – you can expand this later
+-- Dropdown menu (initially hidden)
+local dropdownMenu = Instance.new("ScrollingFrame")
+dropdownMenu.Size = UDim2.new(1, 0, 0, 160)
+dropdownMenu.Position = UDim2.new(0, 0, 0, 32)
+dropdownMenu.BackgroundColor3 = Color3.fromRGB(36, 36, 42)
+dropdownMenu.BackgroundTransparency = 1
+dropdownMenu.ClipsDescendants = true
+dropdownMenu.ScrollBarThickness = 3
+dropdownMenu.Parent = modeDropdown
+
+local modeOptions = {
+    { name = "Size only", value = "Size" },
+    { name = "Multiplier only", value = "Multi" },
+    { name = "Walkspeed only", value = "Speed" },
+    { name = "EatSpeed only", value = "EatSpeed" },
+    { name = "Ratio 5.5 (Size+Multi)", value = "Ratio" }
+}
+
+local function populateModeDropdown()
+    for _, child in ipairs(dropdownMenu:GetChildren()) do
+        if child:IsA("TextButton") then child:Destroy() end
+    end
+    local menuHeight = #modeOptions * 32
+    dropdownMenu.CanvasSize = UDim2.new(0, 0, 0, menuHeight)
+    dropdownMenu.BackgroundTransparency = 0
+    for i, opt in ipairs(modeOptions) do
+        local optBtn = Instance.new("TextButton")
+        optBtn.Size = UDim2.new(1, 0, 0, 32)
+        optBtn.Position = UDim2.new(0, 0, 0, (i-1)*32)
+        optBtn.BackgroundColor3 = (opt.value == upgradeMode) and Color3.fromRGB(54, 54, 60) or Color3.fromRGB(44, 44, 50)
+        optBtn.Text = opt.name
+        optBtn.Font = Enum.Font.Gotham
+        optBtn.TextSize = 14
+        optBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        optBtn.TextXAlignment = Enum.TextXAlignment.Left
+        optBtn.Parent = dropdownMenu
+        local btnCorner = Instance.new("UICorner")
+        btnCorner.CornerRadius = UDim.new(0, 4)
+        btnCorner.Parent = optBtn
+        optBtn.MouseButton1Click:Connect(function()
+            upgradeMode = opt.value
+            modeDropdown.Text = "Mode: " .. opt.name
+            dropdownMenu.BackgroundTransparency = 1
+            -- Update extra toggle visibility (only show when Ratio mode)
+            extraSpeedToggle.Visible = (upgradeMode == "Ratio")
+            extraEatToggle.Visible = (upgradeMode == "Ratio")
+            print("[Auto Upgrade] Mode set to:", upgradeMode)
+        end)
+        optBtn.MouseEnter:Connect(function()
+            optBtn.BackgroundColor3 = Color3.fromRGB(54, 54, 60)
+        end)
+        optBtn.MouseLeave:Connect(function()
+            if opt.value ~= upgradeMode then
+                optBtn.BackgroundColor3 = Color3.fromRGB(44, 44, 50)
+            else
+                optBtn.BackgroundColor3 = Color3.fromRGB(54, 54, 60)
+            end
+        end)
+    end
+end
+
+modeDropdown.MouseButton1Click:Connect(function()
+    if dropdownMenu.BackgroundTransparency == 1 then
+        populateModeDropdown()
+    else
+        dropdownMenu.BackgroundTransparency = 1
+    end
+end)
+
+-- Update ContentY after adding dropdown
+upgradeSection.ContentY = upgradeSection.ContentY + 38
+
+-- --------------------------------------------------------------------
+-- Extra toggles (only visible in Ratio mode)
+local extraSpeedToggle = upgradeSection:CreateToggle("(Ratio) Also upgrade Walkspeed", function(enabled)
+    upgradeSpeedExtra = enabled
+end, false)
+extraSpeedToggle.Visible = (upgradeMode == "Ratio")
+
+local extraEatToggle = upgradeSection:CreateToggle("(Ratio) Also upgrade EatSpeed", function(enabled)
+    upgradeEatSpeedExtra = enabled
+end, false)
+extraEatToggle.Visible = (upgradeMode == "Ratio")
+
+-- (Optional) Button to change ratio – placeholder
 upgradeSection:CreateToggle("Set Ratio (click then type in console)", function()
     local newRatio = tonumber(game:GetService("StarterGui"):SetCore("SendNotification", {
         Title = "Set Ratio", Text = "Enter new ratio (e.g. 5.5)", Duration = 5
-    })) -- This is a placeholder; for a real input you'd need a TextBox.
+    })) -- Placeholder – replace with actual input if needed
     if newRatio and newRatio > 0 then
         targetRatio = newRatio
         print("[Auto Upgrade] Ratio set to", targetRatio)
@@ -751,41 +840,27 @@ upgradeSection:CreateToggle("Set Ratio (click then type in console)", function()
 end, false)
 
 -- ===================== Auto Upgrade Logic =====================
--- Helper: get current upgrade level
+-- (Keep all helper functions: getUpgradeLevel, price functions, getUpgradeCost, purchaseUpgrade)
+-- (Same as before, but adjust tryAutoUpgrade to use upgradeMode)
+
 local function getUpgradeLevel(upgradeName)
     local upgrade = LocalPlayer.Upgrades:FindFirstChild(upgradeName)
     return upgrade and upgrade.Value or 0
 end
 
--- Cost formulas (match your existing ones)
-local function sizePrice(level)
-    return math.floor(level ^ 3 / 2) * 20
-end
-local function speedPrice(level)
-    return math.floor((level * 3) ^ 3 / 200) * 1000
-end
-local function multiPrice(level)
-    return math.floor((level * 10) ^ 3 / 200) * 1000
-end
-local function eatSpeedPrice(level)
-    return math.floor((level * 10) ^ 3 / 200) * 2000
-end
+local function sizePrice(level) return math.floor(level ^ 3 / 2) * 20 end
+local function speedPrice(level) return math.floor((level * 3) ^ 3 / 200) * 1000 end
+local function multiPrice(level) return math.floor((level * 10) ^ 3 / 200) * 1000 end
+local function eatSpeedPrice(level) return math.floor((level * 10) ^ 3 / 200) * 2000 end
 
 local function getUpgradeCost(upgradeName, currentLevel)
-    if upgradeName == "MaxSize" then
-        return sizePrice(currentLevel + 1)
-    elseif upgradeName == "Speed" then
-        return speedPrice(currentLevel + 1)
-    elseif upgradeName == "Multiplier" then
-        return multiPrice(currentLevel + 1)
-    elseif upgradeName == "EatSpeed" then
-        return eatSpeedPrice(currentLevel + 1)
-    else
-        return math.huge
-    end
+    if upgradeName == "MaxSize" then return sizePrice(currentLevel + 1)
+    elseif upgradeName == "Speed" then return speedPrice(currentLevel + 1)
+    elseif upgradeName == "Multiplier" then return multiPrice(currentLevel + 1)
+    elseif upgradeName == "EatSpeed" then return eatSpeedPrice(currentLevel + 1)
+    else return math.huge end
 end
 
--- Fire the upgrade remote (adjust remote name if needed)
 local function purchaseUpgrade(upgradeType)
     local upgradeRemote = Events:FindFirstChild("Upgrade")
     if upgradeRemote then
@@ -807,56 +882,40 @@ local function tryAutoUpgrade()
     local speedLevel = getUpgradeLevel("Speed")
     local eatLevel = getUpgradeLevel("EatSpeed")
 
-    -- Prevent division by zero
-    if sizeLevel == 0 or multiLevel == 0 then return end
-
-    -- Integer‑based ratio check (targetRatio = 5.5)
-    local idealSize = math.floor(multiLevel * targetRatio + 0.5)  -- round to nearest integer
-
-    local shouldUpgradeSize = false
-    local shouldUpgradeMulti = false
-
-    if sizeLevel < idealSize then
-        shouldUpgradeSize = true
-    elseif sizeLevel > idealSize then
-        shouldUpgradeMulti = true
-    else
-        shouldUpgradeSize = true   -- equal → upgrade Size to start chain
-    end
-
-    -- Try to buy Size
-    if shouldUpgradeSize then
+    if upgradeMode == "Ratio" then
+        if sizeLevel == 0 or multiLevel == 0 then return end
+        local idealSize = math.floor(multiLevel * targetRatio + 0.5)
+        if sizeLevel < idealSize then
+            local cost = getUpgradeCost("MaxSize", sizeLevel)
+            if tokens >= cost then purchaseUpgrade("MaxSize") return end
+        elseif sizeLevel > idealSize then
+            local cost = getUpgradeCost("Multiplier", multiLevel)
+            if tokens >= cost then purchaseUpgrade("Multiplier") return end
+        else
+            local cost = getUpgradeCost("MaxSize", sizeLevel)
+            if tokens >= cost then purchaseUpgrade("MaxSize") return end
+        end
+        -- Extra upgrades
+        if upgradeSpeedExtra then
+            local cost = getUpgradeCost("Speed", speedLevel)
+            if tokens >= cost then purchaseUpgrade("Speed") return end
+        end
+        if upgradeEatSpeedExtra then
+            local cost = getUpgradeCost("EatSpeed", eatLevel)
+            if tokens >= cost then purchaseUpgrade("EatSpeed") return end
+        end
+    elseif upgradeMode == "Size" then
         local cost = getUpgradeCost("MaxSize", sizeLevel)
-        if tokens >= cost then
-            purchaseUpgrade("MaxSize")
-            return
-        end
-    end
-
-    -- Try to buy Multiplier
-    if shouldUpgradeMulti then
+        if tokens >= cost then purchaseUpgrade("MaxSize") end
+    elseif upgradeMode == "Multi" then
         local cost = getUpgradeCost("Multiplier", multiLevel)
-        if tokens >= cost then
-            purchaseUpgrade("Multiplier")
-            return
-        end
-    end
-
-    -- Optional: upgrade Speed and EatSpeed if we have spare tokens
-    if upgradeSpeed then
+        if tokens >= cost then purchaseUpgrade("Multiplier") end
+    elseif upgradeMode == "Speed" then
         local cost = getUpgradeCost("Speed", speedLevel)
-        if tokens >= cost then
-            purchaseUpgrade("Speed")
-            return
-        end
-    end
-
-    if upgradeEatSpeed then
+        if tokens >= cost then purchaseUpgrade("Speed") end
+    elseif upgradeMode == "EatSpeed" then
         local cost = getUpgradeCost("EatSpeed", eatLevel)
-        if tokens >= cost then
-            purchaseUpgrade("EatSpeed")
-            return
-        end
+        if tokens >= cost then purchaseUpgrade("EatSpeed") end
     end
 end
 
@@ -865,7 +924,6 @@ local upgradeLoopConnection = nil
 local function startAutoUpgradeLoop()
     if upgradeLoopConnection then return end
     upgradeLoopConnection = RunService.Heartbeat:Connect(function()
-        -- Run every ~3 seconds
         if tick() % 3 < 0.1 then
             task.spawn(tryAutoUpgrade)
         end
@@ -879,7 +937,6 @@ local function stopAutoUpgradeLoop()
     end
 end
 
--- Start the loop by default (since autoUpgradeEnabled = true)
 startAutoUpgradeLoop()
 
 print("[Eat the World] Script loaded - Auto Farm, Auto Collect & Auto Claim are ENABLED by default")
