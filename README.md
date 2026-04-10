@@ -11,7 +11,7 @@
 ```
 loadstring(game:HttpGet("https://raw.githubusercontent.com/RE3PR/ETW/main/Main"))()
 ```
-AutoFarm Script
+### AutoFarm Script
 ```
 loadstring(game:HttpGet("https://raw.githubusercontent.com/RE3PR/ETW/main/AutoFarm"))()
 ```
