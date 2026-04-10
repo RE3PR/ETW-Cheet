@@ -220,7 +220,7 @@ function UI:NewWindow(title)
 
     self.Window = Instance.new("Frame")
     self.Window.Name = "MainWindow"
-    self.Window.Size = UDim2.new(0, 280, 0, 200)
+    self.Window.Size = UDim2.new(0, 280, 0, 200)   -- 更宽，初始高度略高
     self.Window.Position = UDim2.new(0.1, 0, 0.1, 0)
     self.Window.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
     self.Window.BorderSizePixel = 0
@@ -243,6 +243,7 @@ function UI:NewWindow(title)
     self.TitleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 36)
     self.TitleBar.Parent = self.Window
 
+    -- 顶部装饰线
     local topLine = Instance.new("Frame")
     topLine.Size = UDim2.new(1, 0, 0, 2)
     topLine.BackgroundColor3 = Color3.fromRGB(60, 120, 220)
@@ -397,6 +398,7 @@ function UI:NewSection(title)
         TweenService:Create(self.Window, TweenInfo.new(0.2), {Size = UDim2.new(0, 280, 0, newHeight)}):Play()
     end)
 
+    -- 改进：支持默认开启状态
     function section:CreateToggle(text, callback, defaultState)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(1, 0, 0, 42)
@@ -447,6 +449,7 @@ function UI:NewSection(title)
             TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(38, 38, 44)}):Play()
         end)
 
+        -- 如果默认状态为 true，立即调用回调
         if toggleState then
             callback(true)
         end
@@ -708,212 +711,9 @@ local mainUI = UI:NewWindow("Eat the World")
 
 local autoSection = mainUI:NewSection("Auto Features")
 
+-- 默认状态设为 true，UI 会立即显示 "On" 并启动功能
 autoSection:CreateToggle("Auto farm", autoFarmCallback, true)
 autoSection:CreateToggle("Auto collect", autoCollectCallback, true)
 autoSection:CreateToggle("Auto claim", autoClaimCallback, true)
-
--- ===================== Auto Upgrade Section =====================
-local upgradeSection = mainUI:NewSection("Auto Upgrade")
-
-local autoUpgradeEnabled = true
-local upgradeMode = "Ratio"              -- "Size", "Multi", "Speed", "EatSpeed", "Ratio"
-local targetRatio = 5.5
-local upgradeSpeedExtra = false
-local upgradeEatSpeedExtra = false
-
--- Master toggle
-upgradeSection:CreateToggle("Auto Upgrade (Master)", function(enabled)
-    autoUpgradeEnabled = enabled
-end, true)
-
--- Helper to set mode and update extra toggle visibility
-local function setMode(mode)
-    upgradeMode = mode
-    -- Update extra toggles visibility (only in Ratio mode)
-    extraSpeedToggle.Visible = (mode == "Ratio")
-    extraEatToggle.Visible = (mode == "Ratio")
-    print("[Auto Upgrade] Mode set to:", mode)
-end
-
--- Radio button toggles (only one can be On at a time)
--- We'll store the callback functions so we can turn others Off when one is turned On
-local modeCallbacks = {}
-
-local modeSize = upgradeSection:CreateToggle("Mode: Size only", function(enabled)
-    if enabled then
-        for _, cb in ipairs(modeCallbacks) do
-            if cb ~= modeSizeCb then cb(false) end
-        end
-        setMode("Size")
-    elseif upgradeMode == "Size" then
-        -- If turning off the current mode, fallback to Ratio
-        setMode("Ratio")
-        modeRatioCb(true)   -- turn Ratio back on
-    end
-end, false)
-
-local modeMulti = upgradeSection:CreateToggle("Mode: Multiplier only", function(enabled)
-    if enabled then
-        for _, cb in ipairs(modeCallbacks) do
-            if cb ~= modeMultiCb then cb(false) end
-        end
-        setMode("Multi")
-    elseif upgradeMode == "Multi" then
-        setMode("Ratio")
-        modeRatioCb(true)
-    end
-end, false)
-
-local modeSpeed = upgradeSection:CreateToggle("Mode: Walkspeed only", function(enabled)
-    if enabled then
-        for _, cb in ipairs(modeCallbacks) do
-            if cb ~= modeSpeedCb then cb(false) end
-        end
-        setMode("Speed")
-    elseif upgradeMode == "Speed" then
-        setMode("Ratio")
-        modeRatioCb(true)
-    end
-end, false)
-
-local modeEat = upgradeSection:CreateToggle("Mode: EatSpeed only", function(enabled)
-    if enabled then
-        for _, cb in ipairs(modeCallbacks) do
-            if cb ~= modeEatCb then cb(false) end
-        end
-        setMode("EatSpeed")
-    elseif upgradeMode == "EatSpeed" then
-        setMode("Ratio")
-        modeRatioCb(true)
-    end
-end, false)
-
-local modeRatio = upgradeSection:CreateToggle("Mode: Ratio 5.5 (Size+Multi)", function(enabled)
-    if enabled then
-        for _, cb in ipairs(modeCallbacks) do
-            if cb ~= modeRatioCb then cb(false) end
-        end
-        setMode("Ratio")
-    end
-end, true)   -- default true
-
--- Store callbacks for mutual exclusion
-local modeSizeCb, modeMultiCb, modeSpeedCb, modeEatCb, modeRatioCb
-modeSizeCb = function(enabled) modeSize:SetState(enabled) end
-modeMultiCb = function(enabled) modeMulti:SetState(enabled) end
-modeSpeedCb = function(enabled) modeSpeed:SetState(enabled) end
-modeEatCb = function(enabled) modeEat:SetState(enabled) end
-modeRatioCb = function(enabled) modeRatio:SetState(enabled) end
-
-modeCallbacks = {modeSizeCb, modeMultiCb, modeSpeedCb, modeEatCb, modeRatioCb}
-
--- Extra toggles (only visible in Ratio mode)
-local extraSpeedToggle = upgradeSection:CreateToggle("(Ratio) Also upgrade Walkspeed", function(enabled)
-    upgradeSpeedExtra = enabled
-end, false)
-extraSpeedToggle.Visible = (upgradeMode == "Ratio")
-
-local extraEatToggle = upgradeSection:CreateToggle("(Ratio) Also upgrade EatSpeed", function(enabled)
-    upgradeEatSpeedExtra = enabled
-end, false)
-extraEatToggle.Visible = (upgradeMode == "Ratio")
-
--- Ratio adjustment (simple button)
-upgradeSection:CreateToggle("Set Ratio (click then type in console)", function()
-    local newRatio = tonumber(game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Set Ratio", Text = "Enter new ratio (e.g. 5.5)", Duration = 5
-    }))
-    if newRatio and newRatio > 0 then
-        targetRatio = newRatio
-        print("[Auto Upgrade] Ratio set to", targetRatio)
-    end
-end, false)
-
--- ===================== Auto Upgrade Logic =====================
-local function getUpgradeLevel(upgradeName)
-    local upgrade = LocalPlayer.Upgrades:FindFirstChild(upgradeName)
-    return upgrade and upgrade.Value or 0
-end
-
-local function sizePrice(level) return math.floor(level ^ 3 / 2) * 20 end
-local function speedPrice(level) return math.floor((level * 3) ^ 3 / 200) * 1000 end
-local function multiPrice(level) return math.floor((level * 10) ^ 3 / 200) * 1000 end
-local function eatSpeedPrice(level) return math.floor((level * 10) ^ 3 / 200) * 2000 end
-
-local function getUpgradeCost(upgradeName, currentLevel)
-    if upgradeName == "MaxSize" then return sizePrice(currentLevel + 1)
-    elseif upgradeName == "Speed" then return speedPrice(currentLevel + 1)
-    elseif upgradeName == "Multiplier" then return multiPrice(currentLevel + 1)
-    elseif upgradeName == "EatSpeed" then return eatSpeedPrice(currentLevel + 1)
-    else return math.huge end
-end
-
-local function purchaseUpgrade(upgradeType)
-    local upgradeRemote = Events:FindFirstChild("Upgrade")
-    if upgradeRemote then
-        upgradeRemote:FireServer(upgradeType)
-        return true
-    else
-        warn("[Auto Upgrade] Upgrade remote not found! Check ReplicatedStorage.Events")
-        return false
-    end
-end
-
-local function tryAutoUpgrade()
-    if not autoUpgradeEnabled then return end
-
-    local tokens = LocalPlayer:FindFirstChild("Tokens") and LocalPlayer.Tokens.Value or 0
-    local sizeLevel = getUpgradeLevel("MaxSize")
-    local multiLevel = getUpgradeLevel("Multiplier")
-    local speedLevel = getUpgradeLevel("Speed")
-    local eatLevel = getUpgradeLevel("EatSpeed")
-
-    if upgradeMode == "Ratio" then
-        if sizeLevel == 0 or multiLevel == 0 then return end
-        local idealSize = math.floor(multiLevel * targetRatio + 0.5)
-        if sizeLevel < idealSize then
-            local cost = getUpgradeCost("MaxSize", sizeLevel)
-            if tokens >= cost then purchaseUpgrade("MaxSize") return end
-        elseif sizeLevel > idealSize then
-            local cost = getUpgradeCost("Multiplier", multiLevel)
-            if tokens >= cost then purchaseUpgrade("Multiplier") return end
-        else
-            local cost = getUpgradeCost("MaxSize", sizeLevel)
-            if tokens >= cost then purchaseUpgrade("MaxSize") return end
-        end
-        if upgradeSpeedExtra then
-            local cost = getUpgradeCost("Speed", speedLevel)
-            if tokens >= cost then purchaseUpgrade("Speed") return end
-        end
-        if upgradeEatSpeedExtra then
-            local cost = getUpgradeCost("EatSpeed", eatLevel)
-            if tokens >= cost then purchaseUpgrade("EatSpeed") return end
-        end
-    elseif upgradeMode == "Size" then
-        local cost = getUpgradeCost("MaxSize", sizeLevel)
-        if tokens >= cost then purchaseUpgrade("MaxSize") end
-    elseif upgradeMode == "Multi" then
-        local cost = getUpgradeCost("Multiplier", multiLevel)
-        if tokens >= cost then purchaseUpgrade("Multiplier") end
-    elseif upgradeMode == "Speed" then
-        local cost = getUpgradeCost("Speed", speedLevel)
-        if tokens >= cost then purchaseUpgrade("Speed") end
-    elseif upgradeMode == "EatSpeed" then
-        local cost = getUpgradeCost("EatSpeed", eatLevel)
-        if tokens >= cost then purchaseUpgrade("EatSpeed") end
-    end
-end
-
-local upgradeLoopConnection = nil
-local function startAutoUpgradeLoop()
-    if upgradeLoopConnection then return end
-    upgradeLoopConnection = RunService.Heartbeat:Connect(function()
-        if tick() % 3 < 0.1 then
-            task.spawn(tryAutoUpgrade)
-        end
-    end)
-end
-
-startAutoUpgradeLoop()
 
 print("[Eat the World] Script loaded - Auto Farm, Auto Collect & Auto Claim are ENABLED by default")
