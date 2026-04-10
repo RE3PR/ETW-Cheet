@@ -268,15 +268,21 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local UI = {}
 UI.__index = UI
 -- åå»ºä¸»çªå£
+-- Add this function at the beginning of the UI creation section (around line where mainUI is created)
+-- Find the UI:NewWindow function or add this close button logic after creating the window
+
+-- Modified UI:NewWindow function with X button
 function UI:NewWindow(title)
     local self = setmetatable({}, UI)
-    -- ä¸»å®¹å¨
+    
+    -- Main container
     self.MainGui = Instance.new("ScreenGui")
     self.MainGui.Name = "ChiChiWorldUI"
     self.MainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     self.MainGui.ResetOnSpawn = false
     self.MainGui.Parent = syn and CoreGui or PlayerGui
-    -- ä¸»çªå£æ¡æ¶
+    
+    -- Main window frame
     self.Window = Instance.new("Frame")
     self.Window.Name = "MainWindow"
     self.Window.Size = UDim2.new(0, 150, 0, 150)
@@ -285,23 +291,27 @@ function UI:NewWindow(title)
     self.Window.BorderSizePixel = 0
     self.Window.ClipsDescendants = true
     self.Window.Parent = self.MainGui
-    -- çªå£åè§
+    
+    -- Window corner
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = self.Window
-    -- çªå£é´å½±
+    
+    -- Window shadow
     local shadow = Instance.new("UIStroke")
     shadow.Color = Color3.fromRGB(0, 0, 0)
     shadow.Transparency = 0.5
     shadow.Thickness = 4
     shadow.Parent = self.Window
-    -- æ é¢æ 
+    
+    -- Title bar
     self.TitleBar = Instance.new("Frame")
     self.TitleBar.Name = "TitleBar"
     self.TitleBar.Size = UDim2.new(1, 0, 0, 40)
     self.TitleBar.BackgroundColor3 = Color3.fromRGB(36, 36, 42)
     self.TitleBar.Parent = self.Window
-    -- æ é¢æå­
+    
+    -- Title text
     self.TitleText = Instance.new("TextLabel")
     self.TitleText.Name = "TitleText"
     self.TitleText.Size = UDim2.new(1, -40, 1, 0)
@@ -313,7 +323,8 @@ function UI:NewWindow(title)
     self.TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.TitleText.TextXAlignment = Enum.TextXAlignment.Left
     self.TitleText.Parent = self.TitleBar
-    -- æ¶èµ·æé®
+    
+    -- Collapse button
     self.CollapseBtn = Instance.new("TextButton")
     self.CollapseBtn.Name = "CollapseBtn"
     self.CollapseBtn.Size = UDim2.new(0, 40, 1, 0)
@@ -324,6 +335,181 @@ function UI:NewWindow(title)
     self.CollapseBtn.TextSize = 20
     self.CollapseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     self.CollapseBtn.Parent = self.TitleBar
+    
+    -- ========== ADDED X CLOSE BUTTON ==========
+    local XCloseBtn = Instance.new("TextButton")
+    XCloseBtn.Name = "XCloseBtn"
+    XCloseBtn.Size = UDim2.new(0, 30, 1, 0)
+    XCloseBtn.Position = UDim2.new(1, -70, 0, 0)  -- Positioned left of collapse button
+    XCloseBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)  -- Red background
+    XCloseBtn.BackgroundTransparency = 0
+    XCloseBtn.Text = "✕"
+    XCloseBtn.Font = Enum.Font.SourceSansBold
+    XCloseBtn.TextSize = 20
+    XCloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    XCloseBtn.Parent = self.TitleBar
+    
+    -- X button hover effect
+    XCloseBtn.MouseEnter:Connect(function()
+        TweenService:Create(XCloseBtn, TweenInfo.new(0.1), {
+            BackgroundColor3 = Color3.fromRGB(220, 80, 80)
+        }):Play()
+    end)
+    
+    XCloseBtn.MouseLeave:Connect(function()
+        TweenService:Create(XCloseBtn, TweenInfo.new(0.1), {
+            BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+        }):Play()
+    end)
+    
+    -- X button click - DESTROYS EVERYTHING AND STOPS ALL FUNCTIONS
+    XCloseBtn.MouseButton1Click:Connect(function()
+        -- Destroy the entire UI
+        if self.MainGui then
+            self.MainGui:Destroy()
+        end
+        
+        -- Reset all global state variables to stop loops
+        autofarm = false
+        autoCollectingCubes = false
+        autoClaimRewards = false
+        keepUnanchor = false
+        antiFallEnabled = false
+        autoeat = false
+        slippageEliminationEnabled = false
+        gravityLockEnabled = false
+        passiveDefenseEnabled = false
+        isFlinging = false
+        farmMoving = false
+        showMap = false
+        
+        -- Stop anti-fall connection
+        if antiFallConnection then
+            antiFallConnection:Disconnect()
+            antiFallConnection = nil
+        end
+        
+        -- Stop slippage connection
+        if slippageConnection then
+            slippageConnection:Disconnect()
+            slippageConnection = nil
+        end
+        
+        -- Stop gravity lock connection
+        if gravityLockConnection then
+            task.cancel(gravityLockConnection)
+            gravityLockConnection = nil
+        end
+        
+        -- Stop passive defense connection
+        if passiveDefenseConnection then
+            passiveDefenseConnection:Disconnect()
+            passiveDefenseConnection = nil
+        end
+        
+        -- Stop fling connection
+        if flingConnection then
+            task.cancel(flingConnection)
+            flingConnection = nil
+        end
+        
+        -- Destroy any child UIs
+        if flingUI then
+            flingUI:Destroy()
+            flingUI = nil
+        end
+        
+        if SpeedUI then
+            SpeedUI:Destroy()
+            SpeedUI = nil
+        end
+        
+        if teleportThrowUI then
+            teleportThrowUI:Destroy()
+            teleportThrowUI = nil
+        end
+        
+        if teleportGrabUI then
+            teleportGrabUI:Destroy()
+            teleportGrabUI = nil
+        end
+        
+        -- Restore character movement if rock solid was enabled
+        if LockState.IsLocked then
+            local currentCharacter = LocalPlayer.Character
+            if currentCharacter and currentCharacter.Parent then
+                local currentHumanoid = currentCharacter:FindFirstChildOfClass("Humanoid")
+                local currentRootPart = currentCharacter:FindFirstChild("HumanoidRootPart")
+                if currentHumanoid and currentRootPart then
+                    currentRootPart.Anchored = false
+                    currentHumanoid.WalkSpeed = LockState.OriginalWalkSpeed or 16
+                    currentHumanoid.JumpPower = LockState.OriginalJumpPower or 50
+                    currentHumanoid.AutoRotate = LockState.OriginalAutoRotate or true
+                end
+            end
+            LockState.IsLocked = false
+        end
+        
+        -- Restore environment if map was hidden
+        if map and map.Parent == nil then
+            map.Parent = workspace
+        end
+        if chunks and chunks.Parent == nil then
+            chunks.Parent = workspace
+        end
+        if bedrock and bedrock.Parent then
+            bedrock:Destroy()
+            bedrock = nil
+        end
+        
+        -- Restore workspace gravity
+        workspace.Gravity = 196.2
+        
+        -- Restore FallenPartsDestroyHeight
+        if getgenv().FPDH then
+            workspace.FallenPartsDestroyHeight = getgenv().FPDH
+        else
+            workspace.FallenPartsDestroyHeight = -250
+        end
+        
+        -- Send notification
+        Message("UI Closed", "All features stopped and UI destroyed", 3)
+        
+        -- Print to console
+        print("[✓] UI closed - All features stopped")
+    end)
+    -- ========== END X CLOSE BUTTON ==========
+    
+    -- Content container
+    self.ContentContainer = Instance.new("ScrollingFrame")
+    self.ContentContainer.Name = "ContentContainer"
+    self.ContentContainer.Size = UDim2.new(1, 0, 1, -40)
+    self.ContentContainer.Position = UDim2.new(0, 0, 0, 40)
+    self.ContentContainer.BackgroundTransparency = 1
+    self.ContentContainer.ScrollBarThickness = 4
+    self.ContentContainer.CanvasSize = UDim2.new(1, 0, 0, 0)
+    self.ContentContainer.Parent = self.Window
+    
+    -- Menu container
+    self.MenuContainer = Instance.new("Frame")
+    self.MenuContainer.Size = UDim2.new(1, 0, 0, 0)
+    self.MenuContainer.BackgroundTransparency = 1
+    self.MenuContainer.Parent = self.ContentContainer
+    
+    -- Draggable window
+    self:MakeDraggable()
+    
+    -- Collapse/expand
+    self.IsCollapsed = false
+    self.CollapseBtn.MouseButton1Click:Connect(function()
+        self:ToggleCollapse()
+    end)
+    
+    -- Store all submenus
+    self.Sections = {}
+    self.CurrentY = 0
+    return self
+end
     -- åå®¹å®¹å¨
     self.ContentContainer = Instance.new("ScrollingFrame")
     self.ContentContainer.Name = "ContentContainer"
